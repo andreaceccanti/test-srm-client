@@ -1,8 +1,11 @@
 package org.italiangrid.srm.client;
 
+import gov.lbl.srm.StorageResourceManager.ArrayOfAnyURI;
 import gov.lbl.srm.StorageResourceManager.ArrayOfTGetFileRequest;
 import gov.lbl.srm.StorageResourceManager.ISRM;
 import gov.lbl.srm.StorageResourceManager.SRMServiceLocator;
+import gov.lbl.srm.StorageResourceManager.SrmLsRequest;
+import gov.lbl.srm.StorageResourceManager.SrmLsResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPingRequest;
 import gov.lbl.srm.StorageResourceManager.SrmPingResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetRequest;
@@ -104,13 +107,8 @@ public class SRMClient implements SRMHelper {
 	public SrmStatusOfGetRequestResponse srmPTG(List<String> surls,
 		long maxWaitingTimeInMsec) throws MalformedURIException, RemoteException {
 
-		if (maxWaitingTimeInMsec < 0)
-			throw new IllegalArgumentException("Please specify a positive integer"
-				+ " for the max waiting time");
-
-		if (surls == null || surls.isEmpty())
-			throw new IllegalArgumentException(
-				"Please provide a non-null or not-empty" + " list of surls.");
+		checkMaxWaitingTimeInSecArgument(maxWaitingTimeInMsec);
+		checkSulrsArgument(surls);
 
 		List<TGetFileRequest> requests = new ArrayList<TGetFileRequest>();
 
@@ -166,4 +164,43 @@ public class SRMClient implements SRMHelper {
 		return sptgResp;
 
 	}
+	
+	public SrmLsResponse srmLs(List<String> surls,
+		long maxWaitingTimeInMsec) throws MalformedURIException, RemoteException {
+
+		checkMaxWaitingTimeInSecArgument(maxWaitingTimeInMsec);
+		checkSulrsArgument(surls);
+		
+		SrmLsRequest request = new SrmLsRequest();
+		
+		// have strings, but need uris
+		
+		List<URI> uris = new ArrayList<URI>();
+		
+		for(String surl : surls) {
+			
+			uris.add(new URI(surl));
+		}
+		
+		request.setArrayOfSURLs(new ArrayOfAnyURI(uris.toArray(new URI[uris.size()])));
+		
+		return serviceEndpoint.srmLs(request);
+	}
+	
+	private void checkMaxWaitingTimeInSecArgument(long maxWaitingTimeInMsec) {
+		
+		if (maxWaitingTimeInMsec < 0)
+			throw new IllegalArgumentException("Please specify a positive integer"
+				+ " for the max waiting time");
+
+	}
+	
+	private void checkSulrsArgument(List<String> surls) {
+		
+		if (surls == null || surls.isEmpty())
+			throw new IllegalArgumentException(
+				"Please provide a non-null or not-empty" + " list of surls.");
+
+	}
+	
 }
