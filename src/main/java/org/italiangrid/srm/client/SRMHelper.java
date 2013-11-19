@@ -1,5 +1,6 @@
 package org.italiangrid.srm.client;
 
+import gov.lbl.srm.StorageResourceManager.SrmMkdirResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPingResponse;
 import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestResponse;
 
@@ -40,5 +41,13 @@ public interface SRMHelper {
 	public SrmStatusOfGetRequestResponse srmPTG(List<String> surls, 
 		long maxWaitingTimeInMsec) 
 		throws RemoteException, MalformedURIException;
+	
+	/**
+	 * Runs an srm Mkdir.
+	 * 
+	 * @return the {@link SrmMkdirResponse} in case success
+	 * @throws RemoteException in case of errors
+	 */
+	public SrmMkdirResponse srmMkdir(String surl) throws MalformedURIException, RemoteException;
 	
 }

@@ -6,6 +6,8 @@ import gov.lbl.srm.StorageResourceManager.ISRM;
 import gov.lbl.srm.StorageResourceManager.SRMServiceLocator;
 import gov.lbl.srm.StorageResourceManager.SrmLsRequest;
 import gov.lbl.srm.StorageResourceManager.SrmLsResponse;
+import gov.lbl.srm.StorageResourceManager.SrmMkdirRequest;
+import gov.lbl.srm.StorageResourceManager.SrmMkdirResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPingRequest;
 import gov.lbl.srm.StorageResourceManager.SrmPingResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetRequest;
@@ -185,6 +187,18 @@ public class SRMClient implements SRMHelper {
 		request.setArrayOfSURLs(new ArrayOfAnyURI(uris.toArray(new URI[uris.size()])));
 		
 		return serviceEndpoint.srmLs(request);
+	}
+	
+	public SrmMkdirResponse srmMkdir(String surl) throws MalformedURIException, RemoteException {
+
+		if (surl == null || surl.isEmpty())
+			throw new IllegalArgumentException(
+				"Please provide a non-null or not-empty surl.");
+		
+		SrmMkdirRequest request = new SrmMkdirRequest();
+		request.setSURL(new URI(surl));
+		
+		return serviceEndpoint.srmMkdir(request);
 	}
 	
 	private void checkMaxWaitingTimeInSecArgument(long maxWaitingTimeInMsec) {
