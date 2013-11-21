@@ -6,6 +6,8 @@ import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetResponse;
 import gov.lbl.srm.StorageResourceManager.SrmReleaseFilesResponse;
 import gov.lbl.srm.StorageResourceManager.SrmRmResponse;
 import gov.lbl.srm.StorageResourceManager.SrmRmdirResponse;
+import gov.lbl.srm.StorageResourceManager.SrmPrepareToPutResponse;
+import gov.lbl.srm.StorageResourceManager.SrmPutDoneResponse;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -111,7 +113,8 @@ public interface SRMHelper {
 	 * @return the {@link SrmRmResponse} in case success
 	 * @throws RemoteException in case of errors
 	 */
-	public SrmRmResponse srmRm(List<String> surls) throws MalformedURIException, RemoteException;
+	public SrmRmResponse srmRm(List<String> surls) 
+			throws MalformedURIException, RemoteException;
 	
 	/**
 	 * Runs an srm remove directory.
@@ -121,5 +124,47 @@ public interface SRMHelper {
 	 * @return the {@link SrmRmdirResponse} in case success
 	 * @throws RemoteException in case of errors
 	 */
-	public SrmRmdirResponse srmRmdir(String surl, boolean recursive) throws MalformedURIException, RemoteException;
+	public SrmRmdirResponse srmRmdir(String surl, boolean recursive) 
+			throws MalformedURIException, RemoteException;
+
+	/** Runs a srm prepare to put for a list of surls.
+	 * The status of the ptp is checked performing status-ptp calls until
+	 * the request is completed or a maximum waiting treshold is reached.
+	 * 
+	 * @param surls
+	 * @param maxWaitingTimeInMsec
+	 * @return
+	 * @throws RemoteException
+	 * @throws MalformedURIException
+	 */
+	public SrmPrepareToPutResponse srmPtP(List<String> surls,long maxWaitingTimeInMsec)
+			throws RemoteException, MalformedURIException;
+	
+	/** Runs a srm prepare to put for a list of surls and specifying a list 
+	 * of transfer protocols.
+	 * The status of the ptp is checked performing status-ptp calls until
+	 * the request is completed or a maximum waiting treshold is reached.
+	 * 
+	 * @param surls
+	 * @param transferProtocols
+	 * @param maxWaitingTimeInMsec
+	 * @return
+	 * @throws RemoteException
+	 * @throws MalformedURIException
+	 */
+	public SrmPrepareToPutResponse srmPtP(List<String> surls, List<String> transferProtocols, 
+			long maxWaitingTimeInMsec) throws RemoteException, MalformedURIException;
+	
+	/**
+	 * Runs a srm put done for a list of surls with the request token provided.
+	 * 
+	 * @param surls
+	 * @param token
+	 * @return
+	 * @throws RemoteException
+	 * @throws MalformedURIException
+	 */
+	public SrmPutDoneResponse srmPd(List<String> surls, String token)
+			throws RemoteException, MalformedURIException;
+
 }
