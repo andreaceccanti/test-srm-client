@@ -4,6 +4,8 @@ import gov.lbl.srm.StorageResourceManager.SrmMkdirResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPingResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetResponse;
 import gov.lbl.srm.StorageResourceManager.SrmReleaseFilesResponse;
+import gov.lbl.srm.StorageResourceManager.SrmRmResponse;
+import gov.lbl.srm.StorageResourceManager.SrmRmdirResponse;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -100,4 +102,24 @@ public interface SRMHelper {
 	 * @throws RemoteException in case of errors
 	 */
 	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken, List<String> surls) throws MalformedURIException, RemoteException;
+	
+	/**
+	 * Runs an srm remove file.
+	 * 
+	 * @param surls the list of surls
+	 * 
+	 * @return the {@link SrmRmResponse} in case success
+	 * @throws RemoteException in case of errors
+	 */
+	public SrmRmResponse srmRm(List<String> surls) throws MalformedURIException, RemoteException;
+	
+	/**
+	 * Runs an srm remove directory.
+	 * 
+	 * @param surls the list of surls
+	 * 
+	 * @return the {@link SrmRmdirResponse} in case success
+	 * @throws RemoteException in case of errors
+	 */
+	public SrmRmdirResponse srmRmdir(String surl, boolean recursive) throws MalformedURIException, RemoteException;
 }

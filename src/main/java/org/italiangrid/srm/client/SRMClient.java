@@ -15,6 +15,10 @@ import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetRequest;
 import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetResponse;
 import gov.lbl.srm.StorageResourceManager.SrmReleaseFilesRequest;
 import gov.lbl.srm.StorageResourceManager.SrmReleaseFilesResponse;
+import gov.lbl.srm.StorageResourceManager.SrmRmRequest;
+import gov.lbl.srm.StorageResourceManager.SrmRmResponse;
+import gov.lbl.srm.StorageResourceManager.SrmRmdirRequest;
+import gov.lbl.srm.StorageResourceManager.SrmRmdirResponse;
 import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestRequest;
 import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestResponse;
 import gov.lbl.srm.StorageResourceManager.TDirOption;
@@ -120,7 +124,7 @@ public class SRMClient implements SRMHelper {
 		long maxWaitingTimeInMsec) throws MalformedURIException, RemoteException {
 
 		checkMaxWaitingTimeInSecArgument(maxWaitingTimeInMsec);
-		checkSulrsArgument(surls);
+		checkSurlsArgument(surls);
 		checkTransferProtocolsArgument(transferProtocols);
 
 		List<TGetFileRequest> requests = new ArrayList<TGetFileRequest>();
@@ -197,7 +201,7 @@ public class SRMClient implements SRMHelper {
 		long maxWaitingTimeInMsec) throws MalformedURIException, RemoteException {
 
 		checkMaxWaitingTimeInSecArgument(maxWaitingTimeInMsec);
-		checkSulrsArgument(surls);
+		checkSurlsArgument(surls);
 		
 		SrmLsRequest request = new SrmLsRequest();
 		
@@ -208,9 +212,7 @@ public class SRMClient implements SRMHelper {
 	
 	public SrmMkdirResponse srmMkdir(String surl) throws MalformedURIException, RemoteException {
 
-		if (surl == null || surl.isEmpty())
-			throw new IllegalArgumentException(
-				"Please provide a non-null or not-empty surl.");
+		checkSurlArgument(surl);
 		
 		SrmMkdirRequest request = new SrmMkdirRequest();
 		request.setSURL(new URI(surl));
@@ -226,7 +228,14 @@ public class SRMClient implements SRMHelper {
 
 	}
 	
-	private void checkSulrsArgument(List<String> surls) {
+	private void checkSurlArgument(String surl) {
+		
+		if (surl == null || surl.isEmpty())
+			throw new IllegalArgumentException(
+				"Please provide a non-null or not-empty surl.");
+	}
+	
+	private void checkSurlsArgument(List<String> surls) {
 		
 		if (surls == null || surls.isEmpty())
 			throw new IllegalArgumentException(
@@ -277,6 +286,29 @@ public class SRMClient implements SRMHelper {
 			srmReleaseFilesRequest.setArrayOfSURLs(convertSurlsFromList(surls));
 		
 		return serviceEndpoint.srmReleaseFiles(srmReleaseFilesRequest);
+	}
+
+	public SrmRmResponse srmRm(List<String> surls) throws MalformedURIException,
+		RemoteException {
+
+		checkSurlsArgument(surls);
+		
+		SrmRmRequest srmRmRequest = new SrmRmRequest();
+		srmRmRequest.setArrayOfSURLs(convertSurlsFromList(surls));
+		
+		return serviceEndpoint.srmRm(srmRmRequest);
+	}
+
+	public SrmRmdirResponse srmRmdir(String surl, boolean recursive)
+		throws MalformedURIException, RemoteException {
+
+		checkSurlArgument(surl);
+		
+		SrmRmdirRequest srmRmdirRequest = new SrmRmdirRequest();
+		srmRmdirRequest.setSURL(new URI(surl));
+		srmRmdirRequest.setRecursive(recursive);
+		
+		return serviceEndpoint.srmRmdir(srmRmdirRequest);
 	}
 	
 }
