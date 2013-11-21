@@ -2,7 +2,8 @@ package org.italiangrid.srm.client;
 
 import gov.lbl.srm.StorageResourceManager.SrmMkdirResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPingResponse;
-import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestResponse;
+import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetResponse;
+import gov.lbl.srm.StorageResourceManager.SrmReleaseFilesResponse;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -34,20 +35,69 @@ public interface SRMHelper {
 	 * @param surls the list of surls
 	 * @param maxWaitingTimeInMsec the total maximum waiting time for sptg requests. 
 	 * 
-	 * @return the {@link SrmStatusOfGetRequestResponse}
+	 * @return the {@link SrmPrepareToGetResponse}
 	 * @throws RemoteException in case of errors
 	 * @throws MalformedURIException in case of malformed URIs
 	 */
-	public SrmStatusOfGetRequestResponse srmPTG(List<String> surls, 
+	public SrmPrepareToGetResponse srmPTG(List<String> surls, 
+		long maxWaitingTimeInMsec) 
+		throws RemoteException, MalformedURIException;
+	
+	/**
+	 * Runs a srm prepare to get for a list of surls specifying one or more transfer protocols. 
+	 * This call implements the first ptg request and a number of status-ptg
+	 * until either the request is complete or a maximum waiting treshold is reached.
+	 * 
+	 * @param surls the list of surls
+	 * @param transferProtocols the list of transfer protocols
+	 * @param maxWaitingTimeInMsec the total maximum waiting time for sptg requests. 
+	 * 
+	 * @return the {@link SrmPrepareToGetResponse}
+	 * @throws RemoteException in case of errors
+	 * @throws MalformedURIException in case of malformed URIs
+	 */
+	public SrmPrepareToGetResponse srmPTG(List<String> surls, List<String> transferProtocols, 
 		long maxWaitingTimeInMsec) 
 		throws RemoteException, MalformedURIException;
 	
 	/**
 	 * Runs an srm Mkdir.
 	 * 
+	 * @param surl the surl of the new directory
+	 * 
 	 * @return the {@link SrmMkdirResponse} in case success
 	 * @throws RemoteException in case of errors
 	 */
 	public SrmMkdirResponse srmMkdir(String surl) throws MalformedURIException, RemoteException;
 	
+	/**
+	 * Runs an srm ReleaseFiles.
+	 * 
+	 * @param surls the list of surls
+	 * 
+	 * @return the {@link SrmReleaseFilesResponse} in case success
+	 * @throws RemoteException in case of errors
+	 */
+	public SrmReleaseFilesResponse srmReleaseFiles(List<String> surls) throws MalformedURIException, RemoteException;
+	
+	/**
+	 * Runs an srm ReleaseFiles.
+	 * 
+	 * @param requestToken the request token
+	 * 
+	 * @return the {@link SrmReleaseFilesResponse} in case success
+	 * @throws RemoteException in case of errors
+	 */
+	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken) throws MalformedURIException, RemoteException;
+	
+	/**
+	 * Runs an srm ReleaseFiles.
+	 * 
+	 * @param requestToken the request token
+	 * @param surls the list of surls
+	 * 
+	 * @return the {@link SrmReleaseFilesResponse} in case success
+	 * @throws RemoteException in case of errors
+	 */
+	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken, List<String> surls) throws MalformedURIException, RemoteException;
 }

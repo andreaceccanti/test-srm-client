@@ -1,6 +1,7 @@
 package org.italiangrid.srm.client;
 
 import gov.lbl.srm.StorageResourceManager.ArrayOfAnyURI;
+import gov.lbl.srm.StorageResourceManager.ArrayOfString;
 import gov.lbl.srm.StorageResourceManager.ArrayOfTGetFileRequest;
 import gov.lbl.srm.StorageResourceManager.ISRM;
 import gov.lbl.srm.StorageResourceManager.SRMServiceLocator;
@@ -12,11 +13,14 @@ import gov.lbl.srm.StorageResourceManager.SrmPingRequest;
 import gov.lbl.srm.StorageResourceManager.SrmPingResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetRequest;
 import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetResponse;
+import gov.lbl.srm.StorageResourceManager.SrmReleaseFilesRequest;
+import gov.lbl.srm.StorageResourceManager.SrmReleaseFilesResponse;
 import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestRequest;
 import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestResponse;
 import gov.lbl.srm.StorageResourceManager.TDirOption;
 import gov.lbl.srm.StorageResourceManager.TGetFileRequest;
 import gov.lbl.srm.StorageResourceManager.TStatusCode;
+import gov.lbl.srm.StorageResourceManager.TTransferParameters;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -105,12 +109,19 @@ public class SRMClient implements SRMHelper {
 
 		return serviceEndpoint.srmPing(new SrmPingRequest());
 	}
+	
+	public SrmPrepareToGetResponse srmPTG(List<String> surls,
+		long maxWaitingTimeInMsec) throws MalformedURIException, RemoteException {
+		
+		return srmPTG(surls, new ArrayList<String>(), maxWaitingTimeInMsec);
+	}
 
-	public SrmStatusOfGetRequestResponse srmPTG(List<String> surls,
+	public SrmPrepareToGetResponse srmPTG(List<String> surls, List<String> transferProtocols,
 		long maxWaitingTimeInMsec) throws MalformedURIException, RemoteException {
 
 		checkMaxWaitingTimeInSecArgument(maxWaitingTimeInMsec);
 		checkSulrsArgument(surls);
+		checkTransferProtocolsArgument(transferProtocols);
 
 		List<TGetFileRequest> requests = new ArrayList<TGetFileRequest>();
 
@@ -122,6 +133,14 @@ public class SRMClient implements SRMHelper {
 		ptg.setArrayOfFileRequests(new ArrayOfTGetFileRequest(requests
 			.toArray(new TGetFileRequest[requests.size()])));
 
+		if (!transferProtocols.isEmpty()) {
+			TTransferParameters transferParameters = new TTransferParameters();
+			transferParameters.setArrayOfTransferProtocols(
+				new ArrayOfString(transferProtocols.toArray(
+					new String[transferProtocols.size()])));
+			ptg.setTransferParameters(transferParameters);
+		}
+		
 		SrmPrepareToGetResponse resp = serviceEndpoint.srmPrepareToGet(ptg);
 		if (!resp.getReturnStatus().getStatusCode()
 			.equals(TStatusCode.SRM_REQUEST_QUEUED)) {
@@ -154,16 +173,23 @@ public class SRMClient implements SRMHelper {
 
 				}
 
-			} else
-				return sptgResp;
-
+			} else {
+				
+				resp.setReturnStatus(sptgResp.getReturnStatus());
+				resp.setArrayOfFileStatuses(sptgResp.getArrayOfFileStatuses());
+				
+				return resp;
+			}
 		} while (cumulativeSleepTime < maxWaitingTimeInMsec);
 
 		logger.warn(
 			"PtG still in progress after {} status requests and {} waiting time.",
 			requestCounter, maxWaitingTimeInMsec);
 
-		return sptgResp;
+		resp.setReturnStatus(sptgResp.getReturnStatus());
+		resp.setArrayOfFileStatuses(sptgResp.getArrayOfFileStatuses());
+		
+		return resp;
 
 	}
 	
@@ -175,16 +201,7 @@ public class SRMClient implements SRMHelper {
 		
 		SrmLsRequest request = new SrmLsRequest();
 		
-		// have strings, but need uris
-		
-		List<URI> uris = new ArrayList<URI>();
-		
-		for(String surl : surls) {
-			
-			uris.add(new URI(surl));
-		}
-		
-		request.setArrayOfSURLs(new ArrayOfAnyURI(uris.toArray(new URI[uris.size()])));
+		request.setArrayOfSURLs(convertSurlsFromList(surls));
 		
 		return serviceEndpoint.srmLs(request);
 	}
@@ -215,6 +232,51 @@ public class SRMClient implements SRMHelper {
 			throw new IllegalArgumentException(
 				"Please provide a non-null or not-empty" + " list of surls.");
 
+	}
+	
+	private void checkTransferProtocolsArgument(List<String> protocols) {
+		
+		if (protocols == null)
+			throw new IllegalArgumentException(
+				"Please provide a non-null " + " list of protocols.");
+
+	}
+
+	private ArrayOfAnyURI convertSurlsFromList(List<String> surls) 
+		throws MalformedURIException {
+		
+		List<URI> uris = new ArrayList<URI>();
+		
+		for(String surl : surls)
+			uris.add(new URI(surl));
+		
+		return new ArrayOfAnyURI(uris.toArray(new URI[surls.size()]));
+	}
+	
+	public SrmReleaseFilesResponse srmReleaseFiles(List<String> surls)
+		throws MalformedURIException, RemoteException {
+		
+		return srmReleaseFiles(null, surls);
+	}
+
+	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken)
+		throws MalformedURIException, RemoteException {
+		
+		return srmReleaseFiles(requestToken, null);
+	}
+
+	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken,
+		List<String> surls) throws MalformedURIException, RemoteException {
+
+		SrmReleaseFilesRequest srmReleaseFilesRequest = new SrmReleaseFilesRequest();
+		
+		if (requestToken != null && !requestToken.isEmpty())
+			srmReleaseFilesRequest.setRequestToken(requestToken);
+		
+		if (surls != null && !surls.isEmpty())
+			srmReleaseFilesRequest.setArrayOfSURLs(convertSurlsFromList(surls));
+		
+		return serviceEndpoint.srmReleaseFiles(srmReleaseFilesRequest);
 	}
 	
 }
