@@ -2,6 +2,8 @@ package org.italiangrid.srm.client;
 
 import gov.lbl.srm.StorageResourceManager.SrmMkdirResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPingResponse;
+import gov.lbl.srm.StorageResourceManager.SrmPrepareToPutResponse;
+import gov.lbl.srm.StorageResourceManager.SrmPutDoneResponse;
 import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestResponse;
 
 import java.rmi.RemoteException;
@@ -49,5 +51,31 @@ public interface SRMHelper {
 	 * @throws RemoteException in case of errors
 	 */
 	public SrmMkdirResponse srmMkdir(String surl) throws MalformedURIException, RemoteException;
+	
+	/**
+	 * Runs a srm prepare to put for a list of surls.
+	 * The status of the ptp is checked performing status-ptp calls until
+	 * the request is completed or a maximum waiting treshold is reached.
+	 * 
+	 * @param surls
+	 * @param maxWaitingTimeInMsec
+	 * @return
+	 * @throws RemoteException
+	 * @throws MalformedURIException
+	 */
+	public SrmPrepareToPutResponse srmPtP(List<String> surls,long maxWaitingTimeInMsec)
+			throws RemoteException, MalformedURIException;
+	
+	/**
+	 * Runs a srm put done for a list of surls with the request token provided.
+	 * 
+	 * @param surls
+	 * @param token
+	 * @return
+	 * @throws RemoteException
+	 * @throws MalformedURIException
+	 */
+	public SrmPutDoneResponse srmPd(List<String> surls, String token)
+			throws RemoteException, MalformedURIException;
 	
 }
