@@ -78,7 +78,7 @@ public interface SRMHelper {
 	 * @return the {@link SrmReleaseFilesResponse} in case success
 	 * @throws RemoteException in case of errors
 	 */
-	public SrmReleaseFilesResponse srmReleaseFiles(List<String> surls) throws MalformedURIException, RemoteException;;
+	public SrmReleaseFilesResponse srmReleaseFiles(List<String> surls) throws MalformedURIException, RemoteException;
 	
 	/**
 	 * Runs an srm ReleaseFiles.
@@ -88,7 +88,7 @@ public interface SRMHelper {
 	 * @return the {@link SrmReleaseFilesResponse} in case success
 	 * @throws RemoteException in case of errors
 	 */
-	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken) throws MalformedURIException, RemoteException;;
+	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken) throws MalformedURIException, RemoteException;
 	
 	/**
 	 * Runs an srm ReleaseFiles.
@@ -99,5 +99,5 @@ public interface SRMHelper {
 	 * @return the {@link SrmReleaseFilesResponse} in case success
 	 * @throws RemoteException in case of errors
 	 */
-	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken, List<String> surls) throws MalformedURIException, RemoteException;;
+	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken, List<String> surls) throws MalformedURIException, RemoteException;
 }
