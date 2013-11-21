@@ -1,7 +1,9 @@
 package org.italiangrid.srm.client;
 
 import gov.lbl.srm.StorageResourceManager.ArrayOfAnyURI;
+import gov.lbl.srm.StorageResourceManager.ArrayOfString;
 import gov.lbl.srm.StorageResourceManager.ArrayOfTGetFileRequest;
+import gov.lbl.srm.StorageResourceManager.ArrayOfTPutFileRequest;
 import gov.lbl.srm.StorageResourceManager.ISRM;
 import gov.lbl.srm.StorageResourceManager.SRMServiceLocator;
 import gov.lbl.srm.StorageResourceManager.SrmLsRequest;
@@ -12,11 +14,25 @@ import gov.lbl.srm.StorageResourceManager.SrmPingRequest;
 import gov.lbl.srm.StorageResourceManager.SrmPingResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetRequest;
 import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetResponse;
+import gov.lbl.srm.StorageResourceManager.SrmReleaseFilesRequest;
+import gov.lbl.srm.StorageResourceManager.SrmReleaseFilesResponse;
+import gov.lbl.srm.StorageResourceManager.SrmRmRequest;
+import gov.lbl.srm.StorageResourceManager.SrmRmResponse;
+import gov.lbl.srm.StorageResourceManager.SrmRmdirRequest;
+import gov.lbl.srm.StorageResourceManager.SrmRmdirResponse;
+import gov.lbl.srm.StorageResourceManager.SrmPrepareToPutRequest;
+import gov.lbl.srm.StorageResourceManager.SrmPrepareToPutResponse;
+import gov.lbl.srm.StorageResourceManager.SrmPutDoneRequest;
+import gov.lbl.srm.StorageResourceManager.SrmPutDoneResponse;
 import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestRequest;
 import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestResponse;
+import gov.lbl.srm.StorageResourceManager.SrmStatusOfPutRequestRequest;
+import gov.lbl.srm.StorageResourceManager.SrmStatusOfPutRequestResponse;
 import gov.lbl.srm.StorageResourceManager.TDirOption;
 import gov.lbl.srm.StorageResourceManager.TGetFileRequest;
+import gov.lbl.srm.StorageResourceManager.TPutFileRequest;
 import gov.lbl.srm.StorageResourceManager.TStatusCode;
+import gov.lbl.srm.StorageResourceManager.TTransferParameters;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -105,12 +121,19 @@ public class SRMClient implements SRMHelper {
 
 		return serviceEndpoint.srmPing(new SrmPingRequest());
 	}
+	
+	public SrmPrepareToGetResponse srmPTG(List<String> surls,
+		long maxWaitingTimeInMsec) throws MalformedURIException, RemoteException {
+		
+		return srmPTG(surls, new ArrayList<String>(), maxWaitingTimeInMsec);
+	}
 
-	public SrmStatusOfGetRequestResponse srmPTG(List<String> surls,
+	public SrmPrepareToGetResponse srmPTG(List<String> surls, List<String> transferProtocols,
 		long maxWaitingTimeInMsec) throws MalformedURIException, RemoteException {
 
 		checkMaxWaitingTimeInSecArgument(maxWaitingTimeInMsec);
-		checkSulrsArgument(surls);
+		checkSurlsArgument(surls);
+		checkTransferProtocolsArgument(transferProtocols);
 
 		List<TGetFileRequest> requests = new ArrayList<TGetFileRequest>();
 
@@ -122,6 +145,14 @@ public class SRMClient implements SRMHelper {
 		ptg.setArrayOfFileRequests(new ArrayOfTGetFileRequest(requests
 			.toArray(new TGetFileRequest[requests.size()])));
 
+		if (!transferProtocols.isEmpty()) {
+			TTransferParameters transferParameters = new TTransferParameters();
+			transferParameters.setArrayOfTransferProtocols(
+				new ArrayOfString(transferProtocols.toArray(
+					new String[transferProtocols.size()])));
+			ptg.setTransferParameters(transferParameters);
+		}
+		
 		SrmPrepareToGetResponse resp = serviceEndpoint.srmPrepareToGet(ptg);
 		if (!resp.getReturnStatus().getStatusCode()
 			.equals(TStatusCode.SRM_REQUEST_QUEUED)) {
@@ -154,16 +185,23 @@ public class SRMClient implements SRMHelper {
 
 				}
 
-			} else
-				return sptgResp;
-
+			} else {
+				
+				resp.setReturnStatus(sptgResp.getReturnStatus());
+				resp.setArrayOfFileStatuses(sptgResp.getArrayOfFileStatuses());
+				
+				return resp;
+			}
 		} while (cumulativeSleepTime < maxWaitingTimeInMsec);
 
 		logger.warn(
 			"PtG still in progress after {} status requests and {} waiting time.",
 			requestCounter, maxWaitingTimeInMsec);
 
-		return sptgResp;
+		resp.setReturnStatus(sptgResp.getReturnStatus());
+		resp.setArrayOfFileStatuses(sptgResp.getArrayOfFileStatuses());
+		
+		return resp;
 
 	}
 	
@@ -171,34 +209,131 @@ public class SRMClient implements SRMHelper {
 		long maxWaitingTimeInMsec) throws MalformedURIException, RemoteException {
 
 		checkMaxWaitingTimeInSecArgument(maxWaitingTimeInMsec);
-		checkSulrsArgument(surls);
+		checkSurlsArgument(surls);
 		
 		SrmLsRequest request = new SrmLsRequest();
 		
-		// have strings, but need uris
-		
-		List<URI> uris = new ArrayList<URI>();
-		
-		for(String surl : surls) {
-			
-			uris.add(new URI(surl));
-		}
-		
-		request.setArrayOfSURLs(new ArrayOfAnyURI(uris.toArray(new URI[uris.size()])));
+		request.setArrayOfSURLs(convertSurlsFromList(surls));
 		
 		return serviceEndpoint.srmLs(request);
 	}
 	
 	public SrmMkdirResponse srmMkdir(String surl) throws MalformedURIException, RemoteException {
 
-		if (surl == null || surl.isEmpty())
-			throw new IllegalArgumentException(
-				"Please provide a non-null or not-empty surl.");
+		checkSurlArgument(surl);
 		
 		SrmMkdirRequest request = new SrmMkdirRequest();
 		request.setSURL(new URI(surl));
 		
 		return serviceEndpoint.srmMkdir(request);
+	}
+	
+	public SrmPrepareToPutResponse srmPtP(List<String> surls, List<String> transferProtocols,
+			long maxWaitingTimeInMsec) throws RemoteException, MalformedURIException {
+
+			checkSurlsArgument(surls);
+			checkMaxWaitingTimeInSecArgument(maxWaitingTimeInMsec);
+			checkTransferProtocolsArgument(transferProtocols);
+
+			List<TPutFileRequest> requests = new ArrayList<TPutFileRequest>();
+
+			for(String surl: surls){
+				TPutFileRequest tpfr = new TPutFileRequest();
+				tpfr.setTargetSURL(new URI(surl));												
+				requests.add(tpfr);
+			}
+
+			ArrayOfTPutFileRequest arrayRequests = new ArrayOfTPutFileRequest(
+				requests.toArray(new TPutFileRequest[requests.size()]));
+
+			SrmPrepareToPutRequest ptp = new SrmPrepareToPutRequest();
+			ptp.setArrayOfFileRequests(arrayRequests);
+
+			if (!transferProtocols.isEmpty()) {
+				TTransferParameters transferParameters = new TTransferParameters();
+				transferParameters.setArrayOfTransferProtocols(
+					new ArrayOfString(transferProtocols.toArray(
+						new String[transferProtocols.size()])));
+				ptp.setTransferParameters(transferParameters);
+			}
+			
+			SrmPrepareToPutResponse resp = serviceEndpoint.srmPrepareToPut(ptp);
+
+			if (!resp.getReturnStatus().getStatusCode()
+				.equals(TStatusCode.SRM_REQUEST_QUEUED)) {
+				throw new SRMError(resp.getReturnStatus().getStatusCode(), resp
+					.getReturnStatus().getExplanation());
+			}
+
+			SrmStatusOfPutRequestRequest sptp = new SrmStatusOfPutRequestRequest();
+			String token = resp.getRequestToken();
+			sptp.setRequestToken(token);
+
+			SrmStatusOfPutRequestResponse sptpResp = null;
+
+			int requestCounter = 0;
+			TStatusCode lastStatus = null;
+			long sleepInterval = 50;
+			long cumulativeSleepTime = 0;
+
+			do {
+				requestCounter++;
+
+				sptpResp = serviceEndpoint.srmStatusOfPutRequest(sptp);
+				lastStatus = sptpResp.getReturnStatus().getStatusCode();
+
+				if (lastStatus.equals(TStatusCode.SRM_REQUEST_QUEUED)
+					|| lastStatus.equals(TStatusCode.SRM_REQUEST_INPROGRESS)) {
+
+					try {
+						Thread.sleep(sleepInterval);
+						cumulativeSleepTime += sleepInterval;
+					} catch (InterruptedException e) {
+					}
+				} else{
+					resp.setArrayOfFileStatuses(sptpResp.getArrayOfFileStatuses());
+					return resp;
+				}
+
+			} while (cumulativeSleepTime < maxWaitingTimeInMsec);						
+			
+			logger.warn(
+				"PtP still in progress after {} status requests and {} waiting time.",
+				requestCounter, maxWaitingTimeInMsec);
+			
+			resp.setArrayOfFileStatuses(sptpResp.getArrayOfFileStatuses());
+			
+			return resp;
+		}
+
+	public SrmPrepareToPutResponse srmPtP(List<String> surls, long maxWaitingTimeInMsec)
+		throws RemoteException, MalformedURIException {
+
+		return srmPtP(surls, new ArrayList<String>(), maxWaitingTimeInMsec);
+	}
+	
+	public SrmPutDoneResponse srmPd(List<String> surls, String token)
+			throws RemoteException, MalformedURIException {
+
+		checkSurlsArgument(surls);
+			
+		List<URI> uris = new ArrayList<URI>();
+			
+		for(String surl : surls)
+			uris.add(new URI(surl));
+				
+		URI[] urisArray=uris.toArray(new URI[uris.size()]);				
+			
+		ArrayOfAnyURI arrayURIs = new ArrayOfAnyURI();
+		arrayURIs.setUrlArray(urisArray);
+		
+		SrmPutDoneRequest pd = new SrmPutDoneRequest();
+		pd.setArrayOfSURLs(arrayURIs);
+		pd.setRequestToken(token);
+
+		SrmPutDoneResponse resp = serviceEndpoint.srmPutDone(pd);
+		
+		return resp;
 	}
 	
 	private void checkMaxWaitingTimeInSecArgument(long maxWaitingTimeInMsec) {
@@ -209,12 +344,87 @@ public class SRMClient implements SRMHelper {
 
 	}
 	
-	private void checkSulrsArgument(List<String> surls) {
+	private void checkSurlArgument(String surl) {
+		
+		if (surl == null || surl.isEmpty())
+			throw new IllegalArgumentException(
+				"Please provide a non-null or not-empty surl.");
+	}
+	
+	private void checkSurlsArgument(List<String> surls) {
 		
 		if (surls == null || surls.isEmpty())
 			throw new IllegalArgumentException(
 				"Please provide a non-null or not-empty" + " list of surls.");
 
+	}
+	
+	private void checkTransferProtocolsArgument(List<String> protocols) {
+		
+		if (protocols == null)
+			throw new IllegalArgumentException(
+				"Please provide a non-null " + " list of protocols.");
+
+	}
+
+	private ArrayOfAnyURI convertSurlsFromList(List<String> surls) 
+		throws MalformedURIException {
+		
+		List<URI> uris = new ArrayList<URI>();
+		
+		for(String surl : surls)
+			uris.add(new URI(surl));
+		
+		return new ArrayOfAnyURI(uris.toArray(new URI[surls.size()]));
+	}
+	
+	public SrmReleaseFilesResponse srmReleaseFiles(List<String> surls)
+		throws MalformedURIException, RemoteException {
+		
+		return srmReleaseFiles(null, surls);
+	}
+
+	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken)
+		throws MalformedURIException, RemoteException {
+		
+		return srmReleaseFiles(requestToken, null);
+	}
+
+	public SrmReleaseFilesResponse srmReleaseFiles(String requestToken,
+		List<String> surls) throws MalformedURIException, RemoteException {
+
+		SrmReleaseFilesRequest srmReleaseFilesRequest = new SrmReleaseFilesRequest();
+		
+		if (requestToken != null && !requestToken.isEmpty())
+			srmReleaseFilesRequest.setRequestToken(requestToken);
+		
+		if (surls != null && !surls.isEmpty())
+			srmReleaseFilesRequest.setArrayOfSURLs(convertSurlsFromList(surls));
+		
+		return serviceEndpoint.srmReleaseFiles(srmReleaseFilesRequest);
+	}
+
+	public SrmRmResponse srmRm(List<String> surls) throws MalformedURIException,
+		RemoteException {
+
+		checkSurlsArgument(surls);
+		
+		SrmRmRequest srmRmRequest = new SrmRmRequest();
+		srmRmRequest.setArrayOfSURLs(convertSurlsFromList(surls));
+		
+		return serviceEndpoint.srmRm(srmRmRequest);
+	}
+
+	public SrmRmdirResponse srmRmdir(String surl, boolean recursive)
+		throws MalformedURIException, RemoteException {
+
+		checkSurlArgument(surl);
+		
+		SrmRmdirRequest srmRmdirRequest = new SrmRmdirRequest();
+		srmRmdirRequest.setSURL(new URI(surl));
+		srmRmdirRequest.setRecursive(recursive);
+		
+		return serviceEndpoint.srmRmdir(srmRmdirRequest);
 	}
 	
 }

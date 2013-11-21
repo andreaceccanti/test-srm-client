@@ -1,6 +1,6 @@
 package org.italiangrid.srm.client;
 
-import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestResponse;
+import gov.lbl.srm.StorageResourceManager.SrmPrepareToGetResponse;
 import gov.lbl.srm.StorageResourceManager.TGetRequestFileStatus;
 
 import java.net.MalformedURLException;
@@ -23,7 +23,7 @@ public class TestSRMClient {
 		SRMClient client = new SRMClient.Builder().serviceURL(url)
 			.proxyFilePath(proxyFilePath).build();
 
-		SrmStatusOfGetRequestResponse response = client
+		SrmPrepareToGetResponse response = client
 			.srmPTG(
 				Arrays
 					.asList("srm://omii005-vm03.cnaf.infn.it:8444/testers.eu-emi.eu/myfaketest"),
