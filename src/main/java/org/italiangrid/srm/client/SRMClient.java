@@ -31,6 +31,8 @@ import gov.lbl.srm.StorageResourceManager.SrmStatusOfPutRequestResponse;
 import gov.lbl.srm.StorageResourceManager.TDirOption;
 import gov.lbl.srm.StorageResourceManager.TGetFileRequest;
 import gov.lbl.srm.StorageResourceManager.TPutFileRequest;
+import gov.lbl.srm.StorageResourceManager.TPutRequestFileStatus;
+import gov.lbl.srm.StorageResourceManager.TSURLReturnStatus;
 import gov.lbl.srm.StorageResourceManager.TStatusCode;
 import gov.lbl.srm.StorageResourceManager.TTransferParameters;
 
@@ -292,6 +294,7 @@ public class SRMClient implements SRMHelper {
 					}
 				} else{
 					resp.setArrayOfFileStatuses(sptpResp.getArrayOfFileStatuses());
+					resp.setReturnStatus(sptpResp.getReturnStatus());					
 					return resp;
 				}
 
@@ -302,7 +305,8 @@ public class SRMClient implements SRMHelper {
 				requestCounter, maxWaitingTimeInMsec);
 			
 			resp.setArrayOfFileStatuses(sptpResp.getArrayOfFileStatuses());
-			
+			resp.setReturnStatus(sptpResp.getReturnStatus());
+						
 			return resp;
 		}
 
@@ -332,7 +336,7 @@ public class SRMClient implements SRMHelper {
 		pd.setRequestToken(token);
 
 		SrmPutDoneResponse resp = serviceEndpoint.srmPutDone(pd);
-		
+				
 		return resp;
 	}
 	
