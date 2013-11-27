@@ -6,7 +6,6 @@ import gov.lbl.srm.StorageResourceManager.TGetRequestFileStatus;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 import javax.xml.rpc.ServiceException;
 
@@ -23,11 +22,11 @@ public class TestSRMClient {
 		SRMClient client = new SRMClient.Builder().serviceURL(url)
 			.proxyFilePath(proxyFilePath).build();
 
+		String surl = 
+			"srm://omii005-vm03.cnaf.infn.it:8444/testers.eu-emi.eu/myfaketest";
+		
 		SrmPrepareToGetResponse response = client
-			.srmPTG(
-				Arrays
-					.asList("srm://omii005-vm03.cnaf.infn.it:8444/testers.eu-emi.eu/myfaketest"),
-				TimeUnit.SECONDS.toMillis(10));
+			.srmPtG( Arrays.asList(surl) );
 
 		System.out.println(response.getReturnStatus().getStatusCode() + ": "
 			+ response.getReturnStatus().getExplanation());

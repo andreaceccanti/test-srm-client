@@ -8,6 +8,7 @@ import gov.lbl.srm.StorageResourceManager.SrmRmResponse;
 import gov.lbl.srm.StorageResourceManager.SrmRmdirResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPrepareToPutResponse;
 import gov.lbl.srm.StorageResourceManager.SrmPutDoneResponse;
+import gov.lbl.srm.StorageResourceManager.SrmStatusOfGetRequestResponse;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -33,37 +34,41 @@ public interface SRMHelper {
 	
 	/**
 	 * Runs a srm prepare to get for a list of surls. 
-	 * This call implements the first ptg request and a number of status-ptg
-	 * until either the request is complete or a maximum waiting treshold is reached.
 	 * 
 	 * @param surls the list of surls
-	 * @param maxWaitingTimeInMsec the total maximum waiting time for sptg requests. 
 	 * 
 	 * @return the {@link SrmPrepareToGetResponse}
 	 * @throws RemoteException in case of errors
 	 * @throws MalformedURIException in case of malformed URIs
 	 */
-	public SrmPrepareToGetResponse srmPTG(List<String> surls, 
-		long maxWaitingTimeInMsec) 
+	public SrmPrepareToGetResponse srmPtG(List<String> surls) 
 		throws RemoteException, MalformedURIException;
 	
 	/**
 	 * Runs a srm prepare to get for a list of surls specifying one or more transfer protocols. 
-	 * This call implements the first ptg request and a number of status-ptg
-	 * until either the request is complete or a maximum waiting treshold is reached.
 	 * 
 	 * @param surls the list of surls
 	 * @param transferProtocols the list of transfer protocols
-	 * @param maxWaitingTimeInMsec the total maximum waiting time for sptg requests. 
 	 * 
 	 * @return the {@link SrmPrepareToGetResponse}
 	 * @throws RemoteException in case of errors
 	 * @throws MalformedURIException in case of malformed URIs
 	 */
-	public SrmPrepareToGetResponse srmPTG(List<String> surls, List<String> transferProtocols, 
-		long maxWaitingTimeInMsec) 
+	public SrmPrepareToGetResponse srmPtG(List<String> surls, List<String> transferProtocols) 
 		throws RemoteException, MalformedURIException;
 	
+	/**
+	 * Runs a status ptg starting from a ptg response (from which the token is 
+	 * taken).
+	 * 
+	 * @param ptgResp the ptg response
+	 * 
+	 * @return the {@link SrmStatusOfGetRequestResponse}
+	 * @throws RemoteException in case of errors
+	 * @throws MalformedURIException in case of malformed URIs
+	 */
+	public SrmStatusOfGetRequestResponse srmSPtG(SrmPrepareToGetResponse ptgResp)
+		throws RemoteException;
 	/**
 	 * Runs an srm Mkdir.
 	 * 
