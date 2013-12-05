@@ -3,29 +3,24 @@ package org.italiangrid.dav.client;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.security.KeyStoreException;
 import java.security.cert.CertificateException;
 
 import javax.xml.rpc.ServiceException;
 
-import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnectionManager;
-import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.protocol.Protocol;
-import org.apache.jackrabbit.webdav.DavConstants;
+import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.client.methods.DavMethod;
 import org.apache.jackrabbit.webdav.client.methods.MkColMethod;
 import org.apache.jackrabbit.webdav.client.methods.MoveMethod;
-import org.apache.jackrabbit.webdav.client.methods.PropFindMethod;
 import org.italiangrid.axis.CANLMessageLogger;
 import org.italiangrid.voms.util.CertificateValidatorBuilder;
 import org.slf4j.Logger;
@@ -41,7 +36,7 @@ public class WebDAVClient {
 
 	public static class Builder {
 
-		private String url = "https://localhost:8444";
+		private String url;
 		private String proxyFilePath;
 		private String trustAnchorDir = "/etc/grid-security/certificates";
 
@@ -61,7 +56,7 @@ public class WebDAVClient {
 			return this;
 		}
 
-		public Builder trustAnchorDIr(String tad) {
+		public Builder trustAnchorsDir(String tad) {
 
 			trustAnchorDir = tad;
 			return this;
@@ -80,10 +75,21 @@ public class WebDAVClient {
 	private WebDAVClient(Builder builder) throws ServiceException,
 		KeyStoreException, CertificateException, FileNotFoundException, IOException {
 
-		String uri = "http://your-webdav-server";
+		X509Credential credential = new PEMCredential(new FileInputStream(
+			builder.proxyFilePath), (char[]) null);
+
+		X509CertChainValidatorExt validator = CertificateValidatorBuilder
+			.buildCertificateValidator(builder.trustAnchorDir,
+				CANLMessageLogger.INSTANCE, CANLMessageLogger.INSTANCE, 60000L);
+
+		ProtocolSocketFactory sf =  
+			new CustomSecureProtocolSocketFactory(credential, validator);
+
+		Protocol protocol = new Protocol("https", sf, 443);
+		Protocol.registerProtocol("https", protocol);
 
 		HostConfiguration hostConfig = new HostConfiguration();
-		hostConfig.setHost(uri);
+		hostConfig.setHost(new URI(builder.url, false));
 
 		HttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
 
@@ -95,16 +101,6 @@ public class WebDAVClient {
 		httpClient = new HttpClient(connectionManager);
 		httpClient.setHostConfiguration(hostConfig);
 
-		X509Credential credential = new PEMCredential(new FileInputStream(builder.proxyFilePath), (char[]) null);
-
-		X509CertChainValidatorExt validator = CertificateValidatorBuilder.buildCertificateValidator(
-				builder.trustAnchorDir,
-				CANLMessageLogger.INSTANCE, 
-				CANLMessageLogger.INSTANCE, 
-				60000L);
-		
-		Protocol protocol = new Protocol("https", new CustomSecureProtocolSocketFactory(credential, validator), 443);
-		Protocol.registerProtocol("https", protocol);
 	}
 
 	/**
@@ -112,35 +108,35 @@ public class WebDAVClient {
 	 * 
 	 * @param url
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public int head(String url) throws Exception {
 
 		HeadMethod method = new HeadMethod(url);
 		int statusCode = httpClient.executeMethod(method);
-		
+
 		method.releaseConnection();
-		
+
 		return statusCode;
 	}
 
 	public void mkcol(String url) throws IOException, DavException {
-		
+
 		DavMethod method = new MkColMethod(url);
 		httpClient.executeMethod(method);
-		
+
 		method.checkSuccess();
 		method.releaseConnection();
 	}
 
-	public void move(String srcUrl, String destUrl) throws DavException, IOException {
-		
+	public void move(String srcUrl, String destUrl) throws DavException,
+		IOException {
+
 		DavMethod method = new MoveMethod(srcUrl, destUrl, true);
 		httpClient.executeMethod(method);
-		
+
 		method.checkSuccess();
 		method.releaseConnection();
 	}
-	
-}
 
+}
