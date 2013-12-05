@@ -433,8 +433,11 @@ public class SRMClient implements SRMHelper {
 		throws RemoteException {
 		
 		if (!ptpResp.getReturnStatus().getStatusCode()
-			.equals(TStatusCode.SRM_REQUEST_QUEUED)) {
+			.equals(TStatusCode.SRM_REQUEST_QUEUED) && !ptpResp.getReturnStatus().getStatusCode()
+			.equals(TStatusCode.SRM_SUCCESS)) {
+			
 			logger.error("PTP response status is not compatible with sPtP: ");
+			
 			throw new SRMError(ptpResp.getReturnStatus().getStatusCode(), ptpResp
 				.getReturnStatus().getExplanation());
 		}
