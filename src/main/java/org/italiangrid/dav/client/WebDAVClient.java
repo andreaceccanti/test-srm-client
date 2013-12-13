@@ -94,7 +94,8 @@ public class WebDAVClient {
 		HttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
 
 		HttpConnectionManagerParams params = new HttpConnectionManagerParams();
-		params.setMaxConnectionsPerHost(hostConfig, 20);
+		params.setMaxConnectionsPerHost(hostConfig, 100);
+		params.setMaxTotalConnections(100);
 
 		connectionManager.setParams(params);
 
