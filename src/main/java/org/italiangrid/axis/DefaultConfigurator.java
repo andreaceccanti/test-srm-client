@@ -66,14 +66,18 @@ implements CANLAxis1SocketFactoryConfigurator,
 
 	}
 
+	
 	private synchronized X509CertChainValidatorExt getValidator() {
 
 		if (validator == null) {
-			validator = CertificateValidatorBuilder.buildCertificateValidator(
-				trustAnchorsDir, 
-				CANLMessageLogger.INSTANCE, 
-				CANLMessageLogger.INSTANCE, 
-				refreshInterval);
+			validator = 
+			  new CertificateValidatorBuilder()
+			  .trustAnchorsDir(trustAnchorsDir)
+			  .storeUpdateListener(CANLMessageLogger.INSTANCE)
+			  .validationErrorListener(CANLMessageLogger.INSTANCE)
+			  .trustAnchorsUpdateInterval(refreshInterval)
+			  .lazyAnchorsLoading(false)
+			  .build();
 		}
 
 		return validator;

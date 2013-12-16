@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.cert.CertificateException;
+import java.util.Vector;
 
 import javax.xml.rpc.ServiceException;
 
@@ -78,9 +79,13 @@ public class WebDAVClient {
 		X509Credential credential = new PEMCredential(new FileInputStream(
 			builder.proxyFilePath), (char[]) null);
 
-		X509CertChainValidatorExt validator = CertificateValidatorBuilder
-			.buildCertificateValidator(builder.trustAnchorDir,
-				CANLMessageLogger.INSTANCE, CANLMessageLogger.INSTANCE, 60000L);
+		X509CertChainValidatorExt validator = 
+		  new CertificateValidatorBuilder()
+		  .trustAnchorsDir(builder.trustAnchorDir)
+		  .storeUpdateListener(CANLMessageLogger.INSTANCE)
+		  .validationErrorListener(CANLMessageLogger.INSTANCE)
+		  .trustAnchorsUpdateInterval(0L)
+		  .build();
 
 		ProtocolSocketFactory sf =  
 			new CustomSecureProtocolSocketFactory(credential, validator);
@@ -116,6 +121,7 @@ public class WebDAVClient {
 		HeadMethod method = new HeadMethod(url);
 		int statusCode = httpClient.executeMethod(method);
 
+		
 		method.releaseConnection();
 
 		return statusCode;
