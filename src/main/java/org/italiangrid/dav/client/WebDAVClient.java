@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.cert.CertificateException;
-import java.util.Vector;
 
 import javax.xml.rpc.ServiceException;
 
@@ -14,6 +13,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.URI;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.protocol.Protocol;
@@ -144,6 +144,16 @@ public class WebDAVClient {
 
 		method.checkSuccess();
 		method.releaseConnection();
+	}
+
+	public int get(String url) throws IOException, DavException {
+
+		GetMethod method = new GetMethod(url);
+		int statusCode = httpClient.executeMethod(method);
+
+		method.releaseConnection();
+
+		return statusCode;
 	}
 
 }
