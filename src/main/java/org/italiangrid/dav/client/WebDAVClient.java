@@ -1,5 +1,6 @@
 package org.italiangrid.dav.client;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -15,6 +16,8 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
+import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
@@ -22,6 +25,7 @@ import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.client.methods.DavMethod;
 import org.apache.jackrabbit.webdav.client.methods.MkColMethod;
 import org.apache.jackrabbit.webdav.client.methods.MoveMethod;
+import org.apache.jackrabbit.webdav.client.methods.PutMethod;
 import org.italiangrid.axis.CANLMessageLogger;
 import org.italiangrid.voms.util.CertificateValidatorBuilder;
 import org.slf4j.Logger;
@@ -154,6 +158,22 @@ public class WebDAVClient {
 		method.releaseConnection();
 
 		return statusCode;
+	}
+	
+	public int put(String url, String filePath) throws IOException, DavException {
+
+		RequestEntity requestEntity = new InputStreamRequestEntity(
+			new FileInputStream(new File(filePath)));
+		
+		PutMethod method = new PutMethod(url);
+		method.setRequestEntity(requestEntity);
+
+		httpClient.executeMethod(method);
+
+		method.checkSuccess();
+		method.releaseConnection();
+		
+		return method.getStatusCode(); 
 	}
 
 }
