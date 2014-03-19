@@ -23,6 +23,7 @@ import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.client.methods.DavMethod;
+import org.apache.jackrabbit.webdav.client.methods.DeleteMethod;
 import org.apache.jackrabbit.webdav.client.methods.MkColMethod;
 import org.apache.jackrabbit.webdav.client.methods.MoveMethod;
 import org.apache.jackrabbit.webdav.client.methods.PutMethod;
@@ -134,6 +135,15 @@ public class WebDAVClient {
 	public void mkcol(String url) throws IOException, DavException {
 
 		DavMethod method = new MkColMethod(url);
+		httpClient.executeMethod(method);
+
+		method.checkSuccess();
+		method.releaseConnection();
+	}
+
+	public void delete(String url) throws IOException, DavException {
+
+		DavMethod method = new DeleteMethod(url);
 		httpClient.executeMethod(method);
 
 		method.checkSuccess();
